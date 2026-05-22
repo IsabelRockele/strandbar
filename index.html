@@ -335,6 +335,39 @@
     font-size: 17px;
   }
 
+  /* ---- tussenpagina: vraagnummer-raster ---- */
+  .tussen-titel {
+    font-weight: bold;
+    color: var(--donker);
+    font-size: clamp(15px, 3.6vw, 18px);
+    margin: 14px 0 8px;
+  }
+  .tussen-raster {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+  .tussen-nr {
+    aspect-ratio: 1 / 1;
+    border: 2px solid var(--zee);
+    background: #EDF6FA;
+    color: var(--zee);
+    border-radius: 12px;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: clamp(15px, 4vw, 20px);
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(31,67,81,.15);
+    transition: transform .05s ease;
+  }
+  .tussen-nr:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(31,67,81,.15);
+  }
+  @media (max-width: 480px) {
+    .tussen-raster { grid-template-columns: repeat(5, 1fr); }
+  }
+
   @media (max-width: 560px) {
     .eind-lijst { grid-template-columns: 1fr 1fr; }
   }
