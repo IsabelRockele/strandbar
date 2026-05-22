@@ -343,6 +343,77 @@
     .kleurvak { min-width: 80px; }
   }
 
+  /* ---- eindscherm: tekening links, lijst rechts ---- */
+  .eind-body {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+  }
+  .eind-body .oplossing-wrap {
+    flex: 0 0 auto;
+    width: 50%;
+    margin: 0;
+    position: sticky;
+    top: 12px;
+  }
+  .eind-rechts { flex: 1 1 auto; }
+  .eind-rechts .eind-lijst { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 620px) {
+    .eind-body { flex-direction: column; }
+    .eind-body .oplossing-wrap { width: 100%; }
+    .eind-rechts .eind-lijst { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ---- sluitknop rechtsboven in de kaart ---- */
+  .kaart { position: relative; }
+  .sluit-knop {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 38px; height: 38px;
+    border: 2px solid #DDE6EC;
+    background: #F4F7F9;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    color: #6A7C88;
+    cursor: pointer;
+    line-height: 1;
+    z-index: 2;
+  }
+  .sluit-knop:active { background: #E4EBF0; }
+
+  /* ---- tussenpagina: vraagnummer-raster ---- */
+  .tussen-titel {
+    font-weight: bold;
+    color: var(--donker);
+    font-size: clamp(14px, 3.4vw, 17px);
+    margin-bottom: 8px;
+  }
+  .tussen-raster {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+  .tussen-nr {
+    aspect-ratio: 1 / 1;
+    border: 2px solid var(--zee);
+    background: #fff;
+    color: var(--zee);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: clamp(15px, 4vw, 19px);
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(31,67,81,.15);
+  }
+  .tussen-nr:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(31,67,81,.15);
+  }
+  @media (max-width: 480px) {
+    .tussen-raster { grid-template-columns: repeat(5, 1fr); }
+  }
+
   /* op brede schermen (smartbord): groter en leesbaar van achter in de klas */
   /* staat als laatste zodat het de basisregels overschrijft */
   @media (min-width: 1100px) {
@@ -382,14 +453,16 @@ const KLEUR_VAR = {
 const KLEUR_WIT = { rood:1, groen:1, blauw:1, paars:1, bruin:1 };
 
 const app = document.getElementById('app');
-// scherm: 'start' | 0..20 (vraagindex) | 'eind'
+// scherm: 'start' | 0..20 (vraagindex) | 'tussen' | 'eind' | 'afsluit'
 let scherm = 'start';
 
 function render() {
-  if (scherm === 'start')       renderStart();
-  else if (scherm === 'eind')   renderEind();
-  else                          renderVraag(scherm);
-  app.scrollTop = 0;
+  if (scherm === 'start')        renderStart();
+  else if (scherm === 'tussen')  renderTussen();
+  else if (scherm === 'eind')    renderEind();
+  else if (scherm === 'afsluit') renderAfsluit();
+  else                           renderVraag(scherm);
+  window.scrollTo(0, 0);
 }
 
 function renderStart() {
@@ -458,11 +531,37 @@ function renderVraag(i) {
       '<button class="knop knop-vorige" ' + (i === 0 ? 'disabled' : '') +
         ' onclick="ga(' + (i - 1) + ')">‹ Vorige</button>' +
       '<button class="knop knop-volgende" onclick="ga(' +
-        (i === DATA.vragen.length - 1 ? '\'eind\'' : (i + 1)) + ')">' +
+        (i === DATA.vragen.length - 1 ? '\'tussen\'' : (i + 1)) + ')">' +
         (i === DATA.vragen.length - 1 ? 'Klaar! ✓' : 'Volgende ›') +
       '</button>' +
     '</div>' +
     '<p class="teller">Vraag ' + v.nr + ' van ' + DATA.vragen.length + '</p>';
+}
+
+function renderTussen() {
+  const laatste = DATA.vragen.length - 1;
+
+  // raster met alle vraagnummers — tik om terug te springen
+  let nummers = '';
+  DATA.vragen.forEach(function(v, i) {
+    nummers +=
+      '<button class="tussen-nr" onclick="ga(' + i + ')">' + v.nr + '</button>';
+  });
+
+  app.innerHTML =
+    '<div class="kaart">' +
+      '<h1 class="groot-titel">🎉 Knap gedaan! 🎉</h1>' +
+      '<p class="sub">Je hebt alle ' + DATA.vragen.length + ' vragen opgelost.</p>' +
+      '<p class="uitleg-tekst" style="text-align:center;">' +
+        'Kijk eerst je tekening nog eens goed na. Heb je bij elke vraag een vakje ' +
+        'ingekleurd? Wil je een vraag nog eens bekijken? Tik dan op het nummer.</p>' +
+      '<p class="tussen-titel">Terug naar een vraag:</p>' +
+      '<div class="tussen-raster">' + nummers + '</div>' +
+    '</div>' +
+    '<div class="nav">' +
+      '<button class="knop knop-vorige" onclick="ga(' + laatste + ')">‹ Terug naar de vragen</button>' +
+      '<button class="knop knop-volgende" onclick="ga(\'eind\')">Bekijk de oplossing ›</button>' +
+    '</div>';
 }
 
 function renderEind() {
@@ -488,14 +587,30 @@ function renderEind() {
 
   app.innerHTML =
     '<div class="kaart">' +
+      '<button class="sluit-knop" onclick="ga(\'afsluit\')" title="Spel afsluiten">✕</button>' +
       '<h1 class="groot-titel">🎉 De oplossing 🎉</h1>' +
       '<p class="sub">Zo ziet de juist gekleurde strandbar eruit. Heb jij het goed?</p>' +
-      tekening +
-      '<p class="eind-uitleg">Twijfel je over een vraag? Hieronder zie je per vraag ' +
-        'de juiste letter, in de juiste kleur.</p>' +
-      '<ul class="eind-lijst">' + rijen + '</ul>' +
+      '<div class="eind-body">' +
+        tekening +
+        '<div class="eind-rechts">' +
+          '<p class="eind-uitleg">Twijfel je over een vraag? Hier zie je per vraag ' +
+            'de juiste letter, in de juiste kleur.</p>' +
+          '<ul class="eind-lijst">' + rijen + '</ul>' +
+        '</div>' +
+      '</div>' +
     '</div>' +
     '<button class="knop knop-groot" onclick="ga(\'start\')">Opnieuw beginnen 🔄</button>';
+}
+
+function renderAfsluit() {
+  app.innerHTML =
+    '<div class="kaart">' +
+      '<h1 class="groot-titel">🌴 Tot ziens! 🌴</h1>' +
+      '<p class="sub">Bedankt om te spelen bij de strandbar van Kato &amp; Paco.</p>' +
+      '<p class="uitleg-tekst" style="text-align:center;">Je mag dit venster nu sluiten. ' +
+      'Wil je nog eens spelen? Tik dan op de knop hieronder.</p>' +
+    '</div>' +
+    '<button class="knop knop-groot" onclick="ga(\'start\')">Opnieuw spelen 🔄</button>';
 }
 
 function ga(naar) {
@@ -508,12 +623,14 @@ document.addEventListener('keydown', function(e) {
   const laatste = DATA.vragen.length - 1;
   if (e.key === 'ArrowRight') {
     if (scherm === 'start') ga(0);
-    else if (scherm === 'eind') { /* einde, niets */ }
-    else if (scherm === laatste) ga('eind');
+    else if (scherm === laatste) ga('tussen');
+    else if (scherm === 'tussen') ga('eind');
+    else if (scherm === 'eind' || scherm === 'afsluit') { /* einde, niets */ }
     else ga(scherm + 1);
   } else if (e.key === 'ArrowLeft') {
     if (typeof scherm === 'number' && scherm > 0) ga(scherm - 1);
-    else if (scherm === 'eind') ga(laatste);
+    else if (scherm === 'tussen') ga(laatste);
+    else if (scherm === 'eind') ga('tussen');
   }
 });
 
