@@ -27,11 +27,11 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   html, body {
-    height: 100%;
+    min-height: 100%;
     font-family: 'Trebuchet MS', 'Segoe UI', Verdana, sans-serif;
     background: linear-gradient(180deg, #6FC5E3 0%, #2A8FBD 55%, #F6E7C8 55%, #EAD49E 100%);
+    background-attachment: fixed;
     color: var(--donker);
-    overflow: hidden;
   }
 
   /* zon */
@@ -49,7 +49,7 @@
   #app {
     position: relative;
     z-index: 1;
-    height: 100%;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -65,8 +65,6 @@
     border: 4px solid var(--diepzee);
     box-shadow: 0 14px 0 rgba(31,67,81,.18), 0 18px 30px rgba(0,0,0,.22);
     padding: 22px 24px 20px;
-    max-height: 92vh;
-    overflow-y: auto;
   }
 
   /* ---- start- en eindscherm ---- */
@@ -88,6 +86,33 @@
     font-size: clamp(15px, 3.6vw, 18px);
     line-height: 1.5;
     margin-bottom: 14px;
+  }
+  .start-tekening {
+    margin: 4px 0 14px;
+    text-align: center;
+  }
+  .start-tekening img {
+    max-width: 100%;
+    max-height: 320px;
+    height: auto;
+    border-radius: 14px;
+    border: 2px solid #DDE6EC;
+  }
+  /* startpagina: stappen links, tekening rechts */
+  .start-body {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+  }
+  .start-body .stappen { flex: 1 1 auto; margin: 0; }
+  .start-body .start-tekening {
+    flex: 0 0 auto;
+    width: 300px;
+    margin: 0;
+  }
+  @media (max-width: 620px) {
+    .start-body { flex-direction: column; }
+    .start-body .start-tekening { width: 100%; max-width: 320px; }
   }
   .stappen { list-style: none; margin: 6px 0 18px; }
   .stappen li {
@@ -267,31 +292,53 @@
     text-shadow: 0 2px 4px rgba(0,0,0,.3);
   }
 
-  /* ---- eindscherm: antwoordenlijst ---- */
+  /* ---- eindscherm ---- */
+  .oplossing-wrap {
+    margin: 4px 0 14px;
+    text-align: center;
+  }
+  .oplossing-wrap img {
+    max-width: 100%;
+    max-height: 420px;
+    height: auto;
+    border-radius: 14px;
+    border: 2px solid #DDE6EC;
+  }
+  .eind-uitleg {
+    font-size: clamp(13px, 3.2vw, 16px);
+    color: #5A6B78;
+    margin-bottom: 10px;
+  }
   .eind-lijst {
     list-style: none;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 8px;
     margin-top: 6px;
   }
   .eind-rij {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 10px;
     background: #F4F7F9;
     border: 1.5px solid #DDE6EC;
     border-radius: 10px;
-    padding: 7px 9px;
+    padding: 8px 10px;
     font-size: clamp(12px, 3vw, 15px);
   }
-  .eind-bol {
+  .eind-vraag { font-weight: bold; color: var(--zee); flex: 1 1 auto; }
+  .eind-letter {
     flex: 0 0 auto;
-    width: 24px; height: 24px;
-    border-radius: 6px;
+    width: 32px; height: 32px;
+    border-radius: 8px;
     border: 1.5px solid #333;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold;
+    font-size: 17px;
   }
-  .eind-nr { font-weight: bold; color: var(--zee); }
 
-  @media (max-width: 420px) {
+  @media (max-width: 560px) {
+    .eind-lijst { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 380px) {
     .eind-lijst { grid-template-columns: 1fr; }
     .kleurvak { min-width: 80px; }
   }
@@ -346,18 +393,29 @@ function render() {
 }
 
 function renderStart() {
+  // De strandbar-tekening — verbergt zich als het bestand er niet is
+  const tekening =
+    '<div class="start-tekening" id="startTek">' +
+      '<img src="afbeeldingen/tekening.png" alt="De strandbar om in te kleuren" ' +
+      'onerror="document.getElementById(\'startTek\').style.display=\'none\'">' +
+    '</div>';
+
   app.innerHTML =
     '<div class="kaart">' +
       '<h1 class="groot-titel">🏝️ De Strandbar-zoektocht 🏝️</h1>' +
       '<p class="sub">Een herhalingsavontuur met Kato &amp; Paco</p>' +
       '<p class="uitleg-tekst">Kato de Krab en Paco de Pelikaan hebben een prachtige strandbar gebouwd. ' +
       'Maar een storm heeft alle kleuren weggespoeld! Help jij om de strandbar terug kleurrijk te maken?</p>' +
-      '<ul class="stappen">' +
-        '<li><span class="stap-nr">1</span><span>Lees de vraag op je iPad.</span></li>' +
-        '<li><span class="stap-nr">2</span><span>Bij elk antwoord hoort een kleur. Omcirkel de juiste kleur op je antwoordenblad.</span></li>' +
-        '<li><span class="stap-nr">3</span><span>Tik op <b>Volgende</b> als je klaar bent. Werk op je eigen tempo!</span></li>' +
-        '<li><span class="stap-nr">4</span><span>Alle vragen klaar? Kleur de strandbar in de juiste kleuren.</span></li>' +
-      '</ul>' +
+      '<div class="start-body">' +
+        '<ul class="stappen">' +
+          '<li><span class="stap-nr">1</span><span>Neem de tekening van de strandbar.</span></li>' +
+          '<li><span class="stap-nr">2</span><span>Leg je kleurtjes klaar.</span></li>' +
+          '<li><span class="stap-nr">3</span><span>Bij elke vraag kleur je het antwoord op de tekening.</span></li>' +
+          '<li><span class="stap-nr">4</span><span>Tik op <b>Volgende</b> om naar de volgende vraag te gaan.</span></li>' +
+          '<li><span class="stap-nr">5</span><span>Kijk je tekening na: heb je alles hetzelfde gekleurd?</span></li>' +
+        '</ul>' +
+        tekening +
+      '</div>' +
     '</div>' +
     '<button class="knop knop-groot" onclick="ga(0)">Start de zoektocht! 🐚</button>';
 }
@@ -411,18 +469,30 @@ function renderEind() {
   let rijen = '';
   DATA.vragen.forEach(function(v) {
     const juist = v.opties.find(function(o){ return o.juist; });
+    const wit = KLEUR_WIT[juist.kleur] ? '#fff' : '#1F1F1F';
     rijen +=
       '<li class="eind-rij">' +
-        '<span class="eind-nr">' + v.nr + '</span>' +
-        '<span class="eind-bol" style="background:' + KLEUR_VAR[juist.kleur] + '"></span>' +
-        '<span>' + DATA.elementen[v.nr] + ' &rarr; <b>' + juist.kleur + '</b></span>' +
+        '<span class="eind-vraag">Vraag ' + v.nr + '</span>' +
+        '<span class="eind-letter" style="background:' + KLEUR_VAR[juist.kleur] + ';color:' + wit + '">' +
+          juist.letter +
+        '</span>' +
       '</li>';
   });
 
+  // De ingekleurde tekening — verbergt zich als het bestand er niet is
+  const tekening =
+    '<div class="oplossing-wrap" id="oplWrap">' +
+      '<img src="afbeeldingen/oplossing.png" alt="De juist ingekleurde strandbar" ' +
+      'onerror="document.getElementById(\'oplWrap\').style.display=\'none\'">' +
+    '</div>';
+
   app.innerHTML =
     '<div class="kaart">' +
-      '<h1 class="groot-titel">🎉 De juiste kleuren 🎉</h1>' +
-      '<p class="sub">Heb jij de strandbar juist gekleurd? Controleer hieronder!</p>' +
+      '<h1 class="groot-titel">🎉 De oplossing 🎉</h1>' +
+      '<p class="sub">Zo ziet de juist gekleurde strandbar eruit. Heb jij het goed?</p>' +
+      tekening +
+      '<p class="eind-uitleg">Twijfel je over een vraag? Hieronder zie je per vraag ' +
+        'de juiste letter, in de juiste kleur.</p>' +
       '<ul class="eind-lijst">' + rijen + '</ul>' +
     '</div>' +
     '<button class="knop knop-groot" onclick="ga(\'start\')">Opnieuw beginnen 🔄</button>';
