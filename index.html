@@ -384,17 +384,20 @@
   }
   .eind-body .oplossing-wrap {
     flex: 0 0 auto;
-    width: 50%;
+    width: 42%;
     margin: 0;
     position: sticky;
     top: 12px;
   }
   .eind-rechts { flex: 1 1 auto; }
-  .eind-rechts .eind-lijst { grid-template-columns: 1fr 1fr; }
+  .eind-rechts .eind-lijst { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  @media (max-width: 720px) {
+    .eind-rechts .eind-lijst { grid-template-columns: 1fr 1fr; }
+  }
   @media (max-width: 620px) {
     .eind-body { flex-direction: column; }
     .eind-body .oplossing-wrap { width: 100%; }
-    .eind-rechts .eind-lijst { grid-template-columns: 1fr 1fr; }
+    .eind-rechts .eind-lijst { grid-template-columns: 1fr 1fr 1fr; }
   }
 
   /* ---- sluitknop rechtsboven in de kaart ---- */
