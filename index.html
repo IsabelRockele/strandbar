@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>De Strandbar-zoektocht</title>
+<style>
+  :root {
+    --zee:        #2A8FBD;
+    --diepzee:    #1F6E94;
+    --zand:       #F6E7C8;
+    --zanddonker: #E9D2A0;
+    --koraal:     #E8745C;
+    --donker:     #234251;
+    --kaartwit:   #FFFFFF;
+
+    --rood:   #E63946;
+    --oranje: #F4A261;
+    --geel:   #F2C744;
+    --groen:  #5BAA5F;
+    --blauw:  #3B82B7;
+    --paars:  #8E5BB5;
+    --bruin:  #8B5A3C;
+    --roze:   #E89BC0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Trebuchet MS', 'Segoe UI', Verdana, sans-serif;
+    background: linear-gradient(180deg, #6FC5E3 0%, #2A8FBD 55%, #F6E7C8 55%, #EAD49E 100%);
+    color: var(--donker);
+    overflow: hidden;
+  }
+
+  /* zon */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 4vh; right: 7vw;
+    width: 64px; height: 64px;
+    background: #FFD23F;
+    border-radius: 50%;
+    box-shadow: 0 0 0 8px rgba(255,210,63,.35), 0 0 40px rgba(255,210,63,.6);
+    z-index: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .kaart {
+    background: var(--kaartwit);
+    width: 100%;
+    max-width: 680px;
+    border-radius: 22px;
+    border: 4px solid var(--diepzee);
+    box-shadow: 0 14px 0 rgba(31,67,81,.18), 0 18px 30px rgba(0,0,0,.22);
+    padding: 22px 24px 20px;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  /* ---- start- en eindscherm ---- */
+  .groot-titel {
+    font-size: clamp(26px, 6vw, 40px);
+    color: var(--zee);
+    text-align: center;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  .sub {
+    text-align: center;
+    font-style: italic;
+    color: #6A7C88;
+    font-size: clamp(14px, 3.4vw, 18px);
+    margin-bottom: 18px;
+  }
+  .uitleg-tekst {
+    font-size: clamp(15px, 3.6vw, 18px);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .stappen { list-style: none; margin: 6px 0 18px; }
+  .stappen li {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 10px;
+    font-size: clamp(14px, 3.4vw, 17px);
+    line-height: 1.4;
+  }
+  .stap-nr {
+    flex: 0 0 auto;
+    width: 30px; height: 30px;
+    background: var(--zee);
+    color: #fff; font-weight: bold;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  /* ---- vraagscherm ---- */
+  .kop {
+    display: flex; align-items: baseline; gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .vraag-nr {
+    font-size: clamp(22px, 5.5vw, 30px);
+    font-weight: bold;
+    color: var(--zee);
+  }
+  .vak {
+    font-style: italic;
+    color: #8090A0;
+    font-size: clamp(12px, 3vw, 15px);
+  }
+  .verhaal {
+    background: #EAF4F9;
+    border: 1.5px solid #CFE3EE;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-style: italic;
+    color: #3A4A5A;
+    font-size: clamp(13px, 3.3vw, 16px);
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+  .vraag-tekst {
+    font-size: clamp(16px, 4.2vw, 21px);
+    font-weight: bold;
+    color: var(--donker);
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+
+  /* rij: antwoorden links, afbeelding rechts */
+  .vraag-body {
+    display: flex;
+    gap: 18px;
+    align-items: stretch;
+  }
+  .vraag-body .opties { flex: 1 1 auto; }
+  .afb-wrap {
+    flex: 0 0 auto;
+    width: 300px;
+    background: #F4F7F9;
+    border: 2px solid #DDE6EC;
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .afb-wrap img {
+    width: 100%;
+    height: auto;
+    max-height: 280px;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+  }
+  /* op smalle schermen: afbeelding boven de antwoorden */
+  @media (max-width: 560px) {
+    .vraag-body { flex-direction: column-reverse; }
+    .afb-wrap { width: 100%; max-width: 320px; margin: 0 auto; }
+  }
+
+  .opties { display: flex; flex-direction: column; gap: 10px; }
+  .optie {
+    display: flex; align-items: center; gap: 12px;
+    background: #F4F7F9;
+    border: 2px solid #DDE6EC;
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+  .letter {
+    flex: 0 0 auto;
+    width: 36px; height: 36px;
+    border: 2px solid var(--zee);
+    background: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold;
+    font-size: 17px;
+    color: var(--donker);
+  }
+  .optie-tekst {
+    flex: 1 1 auto;
+    font-size: clamp(14px, 3.6vw, 17px);
+  }
+  .kleurvak {
+    flex: 0 0 auto;
+    min-width: 96px;
+    height: 38px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold;
+    font-size: clamp(12px, 3.2vw, 15px);
+  }
+
+  .voet {
+    text-align: center;
+    font-style: italic;
+    color: #8090A0;
+    font-size: clamp(11px, 2.9vw, 13px);
+    margin-top: 14px;
+  }
+
+  /* ---- navigatieknoppen ---- */
+  .nav {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 680px;
+    margin-top: 14px;
+  }
+  .knop {
+    flex: 1 1 0;
+    border: none;
+    border-radius: 16px;
+    padding: 16px 10px;
+    font-family: inherit;
+    font-size: clamp(15px, 4vw, 19px);
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,.18);
+    transition: transform .05s ease;
+  }
+  .knop:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.18); }
+  .knop-vorige {
+    background: #DCE6EC;
+    color: var(--donker);
+  }
+  .knop-volgende {
+    background: var(--koraal);
+    color: #fff;
+  }
+  .knop-groot {
+    flex: none;
+    background: var(--koraal);
+    color: #fff;
+    width: 100%;
+    max-width: 680px;
+    margin-top: 16px;
+    padding: 18px;
+    height: auto;
+    min-height: 64px;
+    font-size: clamp(17px, 4.4vw, 22px);
+  }
+  .knop:disabled { opacity: .35; cursor: default; box-shadow: 0 6px 0 rgba(0,0,0,.1); }
+
+  .teller {
+    text-align: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: clamp(13px, 3.2vw, 16px);
+    margin-top: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,.3);
+  }
+
+  /* ---- eindscherm: antwoordenlijst ---- */
+  .eind-lijst {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .eind-rij {
+    display: flex; align-items: center; gap: 8px;
+    background: #F4F7F9;
+    border: 1.5px solid #DDE6EC;
+    border-radius: 10px;
+    padding: 7px 9px;
+    font-size: clamp(12px, 3vw, 15px);
+  }
+  .eind-bol {
+    flex: 0 0 auto;
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    border: 1.5px solid #333;
+  }
+  .eind-nr { font-weight: bold; color: var(--zee); }
+
+  @media (max-width: 420px) {
+    .eind-lijst { grid-template-columns: 1fr; }
+    .kleurvak { min-width: 80px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const DATA = {"vragen":[{"nr":1,"vak":"maanden","verhaal":"Kato de Krab hangt een uithangbord boven de strandbar. Op het bord wil ze schrijven welke maand er na juni komt, want dan opent de bar feestelijk!","vraag":"Welke maand komt ná juni?","opties":[{"letter":"A","kleur":"bruin","tekst":"juli","juist":true},{"letter":"B","kleur":"roze","tekst":"mei","juist":false},{"letter":"C","kleur":"groen","tekst":"augustus","juist":false}]},{"nr":2,"vak":"rekenen tot 100","verhaal":"Het strodak van de strandbar is gemaakt van gedroogde palmbladeren. Paco de Pelikaan telde gisteren 47 bladeren op het dak. Vandaag legt hij er nog 35 bij.","vraag":"Hoeveel palmbladeren liggen er nu op het dak?","opties":[{"letter":"A","kleur":"rood","tekst":"72","juist":false},{"letter":"B","kleur":"geel","tekst":"82","juist":true},{"letter":"C","kleur":"blauw","tekst":"92","juist":false}]},{"nr":3,"vak":"spelling ei/ij","verhaal":"Paco kijkt uit over het strand. \"Kijk, daar komen weer veel toeristen aan met de tr__n!\" roept hij blij. Maar welke letters horen op de stippeltjes?","vraag":"Hoe schrijf je het juiste woord?","opties":[{"letter":"A","kleur":"paars","tekst":"trijn","juist":false},{"letter":"B","kleur":"oranje","tekst":"trein","juist":true},{"letter":"C","kleur":"groen","tekst":"treyn","juist":false}]},{"nr":4,"vak":"maaltafel","verhaal":"Kato hangt slingers van bloemen aan de strandbar. Aan elke slinger zitten 8 bloemen. Ze maakt 2 slingers in totaal.","vraag":"Hoeveel bloemen heeft Kato in totaal nodig?","opties":[{"letter":"A","kleur":"geel","tekst":"20","juist":false},{"letter":"B","kleur":"roze","tekst":"24","juist":true},{"letter":"C","kleur":"blauw","tekst":"28","juist":false}]},{"nr":5,"vak":"seizoenen","verhaal":"Paco droomt al van de zomer terwijl hij door dikke gele bladeren wandelt in het park. De wind blaast en de bomen worden kaal.","vraag":"In welk seizoen wandelt Paco door de gele bladeren?","opties":[{"letter":"A","kleur":"groen","tekst":"de lente","juist":false},{"letter":"B","kleur":"oranje","tekst":"de herfst","juist":true},{"letter":"C","kleur":"blauw","tekst":"de winter","juist":false}]},{"nr":6,"vak":"spelling au/ou","verhaal":"Op zee waait een frisse wind. Kato rilt en trekt haar trui aan. \"Brrr,\" zegt ze, \"wat is het k__d hier!\"","vraag":"Welk woord hoort op de stippeltjes?","opties":[{"letter":"A","kleur":"rood","tekst":"kaud","juist":false},{"letter":"B","kleur":"paars","tekst":"koud","juist":true},{"letter":"C","kleur":"geel","tekst":"kowt","juist":false}]},{"nr":7,"vak":"deeltafel","verhaal":"Kato heeft 35 schelpen verzameld op het strand. Ze wil er evenveel in 5 mooie potjes leggen voor op de toonbank.","vraag":"Hoeveel schelpen komen er in elk potje?","opties":[{"letter":"A","kleur":"blauw","tekst":"6","juist":false},{"letter":"B","kleur":"bruin","tekst":"8","juist":false},{"letter":"C","kleur":"rood","tekst":"7","juist":true}]},{"nr":8,"vak":"kloklezen","verhaal":"Kato kijkt op de klok van de strandbar. Het is dit tijdstip (zie klok). Over een kwartier komt de eerste klant.","vraag":"Hoe laat komt de klant?","afbeelding":"klok-3u15.png","opties":[{"letter":"A","kleur":"paars","tekst":"3 u 30","juist":true},{"letter":"B","kleur":"blauw","tekst":"4 u 15","juist":false},{"letter":"C","kleur":"geel","tekst":"3 u 45","juist":false}],"afbeeldingData":"data:image/png;base64,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"},{"nr":9,"vak":"spelling verdubbelen","verhaal":"Paco zet kleurige petten op de toonbank. Eerst eentje, daarna nog meer. Hoe schrijf je nu het meervoud?","vraag":"Eén pet, twee …?","opties":[{"letter":"A","kleur":"rood","tekst":"peten","juist":false},{"letter":"B","kleur":"roze","tekst":"petten","juist":true},{"letter":"C","kleur":"groen","tekst":"peetten","juist":false}]},{"nr":10,"vak":"rekenen tot 100","verhaal":"Paco heeft 80 kokosnoten besteld voor de cocktails. Tijdens het transport zijn er 27 gebroken.","vraag":"Hoeveel kokosnoten zijn er nog over?","opties":[{"letter":"A","kleur":"groen","tekst":"53","juist":true},{"letter":"B","kleur":"paars","tekst":"63","juist":false},{"letter":"C","kleur":"geel","tekst":"57","juist":false}]},{"nr":11,"vak":"vlakke figuren","verhaal":"Op de linkerwand van de strandbar wil Kato een houten naambordje hangen in de vorm van een driehoek.","vraag":"Hoeveel hoeken heeft een driehoek?","opties":[{"letter":"A","kleur":"groen","tekst":"3 hoeken","juist":true},{"letter":"B","kleur":"blauw","tekst":"4 hoeken","juist":false},{"letter":"C","kleur":"rood","tekst":"6 hoeken","juist":false}]},{"nr":12,"vak":"verkeer","verhaal":"Op weg naar de strandbar moet Paco de straat oversteken. Het verkeerslicht springt op rood.","vraag":"Wat moet Paco doen?","opties":[{"letter":"A","kleur":"groen","tekst":"doorlopen, het is veilig","juist":false},{"letter":"B","kleur":"blauw","tekst":"stoppen en wachten","juist":true},{"letter":"C","kleur":"oranje","tekst":"heel snel oversteken","juist":false}]},{"nr":13,"vak":"spelling eindletter d/t","verhaal":"Op de wegwijzer naast de strandbar staat een woord, maar de laatste letter is verbleekt door de zon. Kato weet dat het over haar lieve viervoeter gaat die altijd \"WAF!\" zegt.","vraag":"Hoe schrijf je het woord juist?","opties":[{"letter":"A","kleur":"bruin","tekst":"hond","juist":true},{"letter":"B","kleur":"geel","tekst":"hont","juist":false},{"letter":"C","kleur":"roze","tekst":"honnd","juist":false}]},{"nr":14,"vak":"prehistorie","verhaal":"Paco bladert in een dik boek over de prehistorie. Hij leest hoe de mensen heel lang geleden leefden, toen er nog geen winkels en geen pizza bestonden.","vraag":"Wat aten de mensen in de prehistorie?","opties":[{"letter":"A","kleur":"rood","tekst":"pizza en frieten","juist":false},{"letter":"B","kleur":"bruin","tekst":"vlees, vis, bessen en noten","juist":true},{"letter":"C","kleur":"blauw","tekst":"pasta en brood uit de winkel","juist":false}]},{"nr":15,"vak":"meten (liter)","verhaal":"Kato maakt verse citroenlimonade. Ze schenkt een grote brik in haar kan.","vraag":"Wat past het best bij 1 liter?","opties":[{"letter":"A","kleur":"geel","tekst":"een brik appelsap","juist":true},{"letter":"B","kleur":"blauw","tekst":"een druppel water","juist":false},{"letter":"C","kleur":"groen","tekst":"een heel zwembad vol water","juist":false}]},{"nr":16,"vak":"spelling verenkelen","verhaal":"Paco maakt cocktails in de schaduw van de palmbomen. Een toerist wijst naar de bomen en vraagt: \"Hoe schrijf je dat woord eigenlijk in het enkelvoud?\"","vraag":"Twee bomen — één …?","opties":[{"letter":"A","kleur":"rood","tekst":"boom","juist":true},{"letter":"B","kleur":"oranje","tekst":"bom","juist":false},{"letter":"C","kleur":"blauw","tekst":"boomm","juist":false}]},{"nr":17,"vak":"geld (cent)","verhaal":"Een klant koopt een glaasje citroenlimonade bij Kato. Het kost 75 cent. De klant betaalt met een muntje van 50 cent en een muntje van 20 cent.","vraag":"Heeft de klant genoeg betaald?","opties":[{"letter":"A","kleur":"geel","tekst":"nee, er ontbreekt nog 5 cent","juist":true},{"letter":"B","kleur":"rood","tekst":"ja, precies genoeg","juist":false},{"letter":"C","kleur":"paars","tekst":"ja, en hij krijgt 5 cent terug","juist":false}]},{"nr":18,"vak":"spelling eindletter b/p","verhaal":"Op het strand naast de strandbar loopt een wollig dier dat \"bèèèè\" roept. Paco wil het tekenen op een bordje, maar twijfelt over de laatste letter.","vraag":"Hoe schrijf je het woord juist?","opties":[{"letter":"A","kleur":"blauw","tekst":"schaab","juist":false},{"letter":"B","kleur":"roze","tekst":"schaap","juist":true},{"letter":"C","kleur":"geel","tekst":"schaapp","juist":false}]},{"nr":19,"vak":"prehistorie","verhaal":"Kato vertelt Paco een verhaal over de prehistorie. \"De mensen van toen hadden ook een plek om te wonen,\" zegt ze, \"maar geen huizen zoals wij nu.\"","vraag":"Waar woonden de mensen in de prehistorie?","opties":[{"letter":"A","kleur":"geel","tekst":"in een appartement","juist":false},{"letter":"B","kleur":"roze","tekst":"in een grot of een hut van takken","juist":true},{"letter":"C","kleur":"blauw","tekst":"in een groot kasteel","juist":false}]},{"nr":20,"vak":"meten (kg)","verhaal":"Kato wil weten hoe zwaar de bloempot is. Ze zet de pot op de weegschaal.","vraag":"In welke eenheid lees je af hoe zwaar iets is?","opties":[{"letter":"A","kleur":"blauw","tekst":"in centimeter (cm)","juist":false},{"letter":"B","kleur":"oranje","tekst":"in liter (l)","juist":false},{"letter":"C","kleur":"bruin","tekst":"in kilogram (kg)","juist":true}]},{"nr":21,"vak":"verkeer","verhaal":"Paco wil met zijn surfplank naar het strand. Hij moet eerst de drukke straat oversteken. Gelukkig is er een veilige plek.","vraag":"Waar steekt Paco veilig over?","opties":[{"letter":"A","kleur":"rood","tekst":"midden op de straat","juist":false},{"letter":"B","kleur":"oranje","tekst":"tussen geparkeerde auto’s","juist":false},{"letter":"C","kleur":"blauw","tekst":"op het zebrapad","juist":true}]}],"elementen":{"1":"het uithangbord","2":"het strodak","3":"lampje 1","4":"lampje 2","5":"lampje 3","6":"lampje 4","7":"lampje 5","8":"lampje 6","9":"lampje 7","10":"lampje 8","11":"de linkerwand","12":"de rechterwand","13":"de wegwijzer","14":"de kokosnoot-cocktail","15":"het limonade-glas","16":"de tropische cocktail","17":"de mason-jar","18":"de milkshake","19":"de bloemenslinger","20":"de bloempot","21":"de surfplank"}};
+const KLEUR_VAR = {
+  rood: '#E63946', oranje: '#F4A261', geel: '#F2C744', groen: '#5BAA5F',
+  blauw: '#3B82B7', paars: '#8E5BB5', bruin: '#8B5A3C', roze: '#E89BC0'
+};
+const KLEUR_WIT = { rood:1, groen:1, blauw:1, paars:1, bruin:1 };
+
+const app = document.getElementById('app');
+// scherm: 'start' | 0..20 (vraagindex) | 'eind'
+let scherm = 'start';
+
+function render() {
+  if (scherm === 'start')       renderStart();
+  else if (scherm === 'eind')   renderEind();
+  else                          renderVraag(scherm);
+  app.scrollTop = 0;
+}
+
+function renderStart() {
+  app.innerHTML =
+    '<div class="kaart">' +
+      '<h1 class="groot-titel">🏝️ De Strandbar-zoektocht 🏝️</h1>' +
+      '<p class="sub">Een herhalingsavontuur met Kato &amp; Paco</p>' +
+      '<p class="uitleg-tekst">Kato de Krab en Paco de Pelikaan hebben een prachtige strandbar gebouwd. ' +
+      'Maar een storm heeft alle kleuren weggespoeld! Help jij om de strandbar terug kleurrijk te maken?</p>' +
+      '<ul class="stappen">' +
+        '<li><span class="stap-nr">1</span><span>Lees de vraag op je iPad.</span></li>' +
+        '<li><span class="stap-nr">2</span><span>Bij elk antwoord hoort een kleur. Omcirkel de juiste kleur op je antwoordenblad.</span></li>' +
+        '<li><span class="stap-nr">3</span><span>Tik op <b>Volgende</b> als je klaar bent. Werk op je eigen tempo!</span></li>' +
+        '<li><span class="stap-nr">4</span><span>Alle vragen klaar? Kleur de strandbar in de juiste kleuren.</span></li>' +
+      '</ul>' +
+    '</div>' +
+    '<button class="knop knop-groot" onclick="ga(0)">Start de zoektocht! 🐚</button>';
+}
+
+function renderVraag(i) {
+  const v = DATA.vragen[i];
+  let opties = '';
+  v.opties.forEach(function(o) {
+    const wit = KLEUR_WIT[o.kleur] ? '#fff' : '#1F1F1F';
+    opties +=
+      '<div class="optie">' +
+        '<div class="letter">' + o.letter + '</div>' +
+        '<div class="optie-tekst">' + o.tekst + '</div>' +
+        '<div class="kleurvak" style="background:' + KLEUR_VAR[o.kleur] + ';color:' + wit + '">' + o.kleur + '</div>' +
+      '</div>';
+  });
+
+  // Afbeelding: laadt afbeeldingen/vraagN.png — verbergt zichzelf als het bestand er niet is
+  const afb =
+    '<div class="afb-wrap" id="afbWrap">' +
+      '<img src="afbeeldingen/vraag' + v.nr + '.png" alt="" ' +
+      'onerror="document.getElementById(\'afbWrap\').style.display=\'none\'">' +
+    '</div>';
+
+  app.innerHTML =
+    '<div class="kaart">' +
+      '<div class="kop">' +
+        '<span class="vraag-nr">Vraag ' + v.nr + '</span>' +
+        '<span class="vak">' + v.vak + '</span>' +
+      '</div>' +
+      '<div class="verhaal">' + v.verhaal + '</div>' +
+      '<div class="vraag-tekst">' + v.vraag + '</div>' +
+      '<div class="vraag-body">' +
+        '<div class="opties">' + opties + '</div>' +
+        afb +
+      '</div>' +
+      '<p class="voet">✏️ Omcirkel de juiste kleur op je antwoordenblad</p>' +
+    '</div>' +
+    '<div class="nav">' +
+      '<button class="knop knop-vorige" ' + (i === 0 ? 'disabled' : '') +
+        ' onclick="ga(' + (i - 1) + ')">‹ Vorige</button>' +
+      '<button class="knop knop-volgende" onclick="ga(' +
+        (i === DATA.vragen.length - 1 ? '\'eind\'' : (i + 1)) + ')">' +
+        (i === DATA.vragen.length - 1 ? 'Klaar! ✓' : 'Volgende ›') +
+      '</button>' +
+    '</div>' +
+    '<p class="teller">Vraag ' + v.nr + ' van ' + DATA.vragen.length + '</p>';
+}
+
+function renderEind() {
+  let rijen = '';
+  DATA.vragen.forEach(function(v) {
+    const juist = v.opties.find(function(o){ return o.juist; });
+    rijen +=
+      '<li class="eind-rij">' +
+        '<span class="eind-nr">' + v.nr + '</span>' +
+        '<span class="eind-bol" style="background:' + KLEUR_VAR[juist.kleur] + '"></span>' +
+        '<span>' + DATA.elementen[v.nr] + ' &rarr; <b>' + juist.kleur + '</b></span>' +
+      '</li>';
+  });
+
+  app.innerHTML =
+    '<div class="kaart">' +
+      '<h1 class="groot-titel">🎉 De juiste kleuren 🎉</h1>' +
+      '<p class="sub">Heb jij de strandbar juist gekleurd? Controleer hieronder!</p>' +
+      '<ul class="eind-lijst">' + rijen + '</ul>' +
+    '</div>' +
+    '<button class="knop knop-groot" onclick="ga(\'start\')">Opnieuw beginnen 🔄</button>';
+}
+
+function ga(naar) {
+  scherm = naar;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
